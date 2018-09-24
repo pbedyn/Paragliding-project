@@ -20,7 +20,7 @@ import requests
 
 ## read content of all flights from Borsk and save in the Borsk.txt file for further extraction of individual igc files
 path2data = 'C:/Users/bedynskipa01/Documents/09. Hobby/Flights/'
-summary_file = "Borsk.txt"
+summary_file = "Roldanillo.txt"
 
 ################# This section extracts data from the xcportal website and saves all files from a given location #############
 ################# Need to know the node which has to be extracted manually
@@ -28,10 +28,10 @@ summary_file = "Borsk.txt"
 
 L_tracks = []
 summary_file_path = path2data + summary_file
-url = "http://xcportal.pl/node/16847?order=field_flight_max_points&sort=desc"
+url = "http://xcportal.pl/node/40056?order=field_flight_max_points&sort=desc"
        
 try:
-    url = "http://xcportal.pl/node/16847?order=field_flight_max_points&sort=desc"
+    url = "http://xcportal.pl/node/40056?order=field_flight_max_points&sort=desc"
     r = requests.get(url, stream = True)
     with open(summary_file_path, 'a') as the_file:
         the_file.write(r.text)
@@ -71,7 +71,7 @@ for x in L_tracks[1:]:
 ### save all files in the given directory - in this example in the Borsk directory
 for igc in L_igcs[:]:
     url = igc
-    file_path = path2data + "Borsk/" + str(L_igcs.index(igc)) + ".txt"
+    file_path = path2data + "Roldanillo/" + str(L_igcs.index(igc)) + ".txt"
     try:
         r = requests.get(url, stream = True)
         with open(file_path, 'w', encoding="utf-8") as the_file: ## the encoding command handles polish characters
@@ -88,7 +88,7 @@ df = pd.DataFrame(columns = columns)
 
 ### this loop goes through all files and appends the motherfather of a dataframe
 for i in range(2000, 2001):
-        file_path = path2data + "Borsk/" + str(i) + ".txt"
+        file_path = path2data + "Roldanillo/" + str(i) + ".txt"
         with open(file_path, 'r') as f:
             for line in f:
                 if line[0:5] == "HFDTE":
