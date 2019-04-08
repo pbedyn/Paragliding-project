@@ -1,186 +1,230 @@
 # -*- coding: utf-8 -*-
 """
 Created on Sat Oct 20 09:12:00 2018
-
-@author: BedynskiPa01
+@author: Pawel Bedynski
+Go through all folders within a given grid
+Read in all files and create one dataframe within each grid
+Assumes there are new igc files in the folder or the folder needs preprocessing
+Takes all igc files in the folder and imports them into a dataframe
+Saves the dataframe into the "frame" file in that grid folder
 """
 from datetime import datetime
-## packages to move files from one folder to another
+# packages to move files from one folder to another
 import glob
-import shutil
+import zipfile
+import os
+from os.path import basename
 
-### import pandas and numpy
+# import pandas and numpy
 import pandas as pd
 import numpy as np
 
-### import warnings to suppress warnings during execution
+# import warnings to suppress warnings during execution
 import warnings
 warnings.filterwarnings("ignore")
 
-### we'll measure performance of this little beauty
-start_time = datetime.now()
+# setting up paths to various data files
+path2grid = 'D:\\Flights\\Grid\\'
 
-### working with data
-path2data = 'C:\\Users\\bedynskipa01\\Downloads\\Flights\\'
-###path2data = 'C:\\Users\\bedynskipa01\\Downloads\\Flights_example\\'
-allFiles = glob.glob(path2data + "*.igc")
-frame = pd.DataFrame()
-list_ = []
-summary_list = []
-for single_file in allFiles:
-    single_file_adj = single_file[0:len(single_file) - 4] + ".csv"
-    shutil.move(single_file, single_file_adj)
-    try:
-        df = pd.read_csv(single_file_adj, index_col = None, header=None, skiprows = 0, usecols=[0], encoding = "ISO-8859-1")
-        df.columns = ["record"]
-        ### the list summary_list contains flight statistics and reference to the file
-        ### it is reshaped later to a 4 column data frame called "summary_df"
-        summary_list.append(single_file)
-        summary_list.append(df['record'][min(df[df["record"].str.startswith("HFDTE") == True].index.tolist())])
-        summary_list.append(df['record'][min(df[df["record"].str.startswith("B") == True].index.tolist())])
-        summary_list.append(df['record'][max(df[df["record"].str.startswith("B") == True].index.tolist())])
-        summary_list.append(min(df[df["record"].str.startswith("B") == True].index.tolist()))
-        summary_list.append(max(df[df["record"].str.startswith("B") == True].index.tolist()))
-        df["date"] = df['record'][min(df[df["record"].str.startswith("HFDTE") == True].index.tolist())]
-        list_.append(df)
-    except:
-        pass
-    shutil.move(single_file_adj, single_file)
-frame = pd.concat(list_, sort = False)
-### drop duplicates
-frame = frame.drop_duplicates(subset=['record', 'date'], keep="first")
-
-### reshape the summary_list into the 4 column data frame summary_df
-colnames = ['flight_file', 'date', 'start_record', 'finish_record', 'start_position', 'finish_position']
-summary_df = pd.DataFrame(np.array(summary_list).reshape(-1, len(colnames)), columns = colnames)
-del single_file, single_file_adj, colnames, summary_list, list_, df
-
-frame = frame.drop_duplicates(subset=['record', 'date'], keep="first")
-## extracts only flight records starting with a "B"
-df_t = frame[frame["record"].str.startswith("B") == True]    
-
-### saves dataframe as Series
-my_series = df_t["record"].T.squeeze()
-### extract data from the series to represent the different data facts
-df_t["flight_time"] = my_series.str.slice(1, 7, 1)
-df_t["latitude"] = my_series.str.slice(7, 14, 1)
-df_t["lat_orient"] = my_series.str.slice(14, 15, 1)
-df_t["longitude"] = my_series.str.slice(15, 23, 1)
-df_t["lon_orient"] = my_series.str.slice(23, 24, 1)
-df_t["bar_alt"] = my_series.str.slice(25, 30, 1)
-df_t["gps_alt"] = my_series.str.slice(31, 35, 1)
-
-### extract only numeric data from the data field (eliminate the "HFDTE" and the such)
-### df_t column needs to be transposed into a series in order to perform this operation
-df_t['date'] = df_t['date'].T.squeeze().str.extract('(\d\d\d\d\d\d)', expand = True)
-### change format of the date field to yymmdd
-df_t['date'] = df_t['date'].str.slice(4, 6, 1) + \
-               df_t['date'].str.slice(2, 4, 1) + \
-               df_t['date'].str.slice(0, 2, 1)
-frame_file = path2data + "frame_test.csv"
-df_t.to_csv(frame_file, sep = ",")
-## df_t = pd.read_csv(frame_file, index_col = 0)
-
-series_file = path2data + "my_series.csv"
-my_series.to_csv(series_file, sep = ",")
-## my_series = pd.read_csv(series_file, header = -1, index_col = 0)
-## my_series = my_series.T.squeeze()
-
-## delete components that went into building the df_t test data frame
-del allFiles, frame_file, series_file, my_series
-
-df_t['longitude'] = df_t['longitude'].str.replace('-','0')
-df_t['longitude'] = df_t['longitude'].astype(float)
-df_t['longitude'] = df_t['longitude'] / 100000.0
-
-df_t['latitude'] = df_t['latitude'].astype(float)
-df_t['latitude'] = df_t['latitude'] / 100000.0
-df_t['latitude'][df_t['latitude'] > 10.0] = df_t['latitude'] / 10.0
-
-## prepare the time_diff column
-df_t['flight_time'] = df_t['flight_time'].astype(float)
-df_t['flight_time_shifted'] = df_t['flight_time'].shift(1)
-df_t['flight_time_shifted'][df_t['flight_time_shifted'].isnull()] = df_t['flight_time']
-df_t['time_diff'] = df_t['flight_time'] - df_t['flight_time_shifted']
-df_t['time_diff'][df_t['time_diff'] == 0] = 1.0
-## drop the auxiliary flight_time_shifted column
-df_t = df_t.drop(['flight_time_shifted'], axis = 1)
-
-## run calculation funtions
-df_t['distance'] = calc_distance(df_t)
-## clean up the calculcated distance
-df_t['distance'][df_t['distance'] > 1] = 0
-df_t['bearing'] = calc_bearing(df_t)
-df_t['velocity'] = calc_velocity(df_t)
-
-df_t['bar_alt'] = df_t['bar_alt'].astype(float)
-df_t['bar_alt_diff'] = calc_height_gain(df_t, "bar_alt")
-
-df_t['gps_alt'] = df_t['gps_alt'].astype(float)
-df_t['gps_alt_diff'] = calc_height_gain(df_t, "gps_alt")
-df_t['bar_alt_vel'] = inst_vel_m_per_s(df_t['bar_alt_diff'], df_t['time_diff'])
-df_t['gps_alt_vel'] = inst_vel_m_per_s(df_t['gps_alt_diff'], df_t['time_diff'])
 
 ###############################################################################
-#### clean up the data frame 
-df_t['velocity'][df_t['velocity'] > 100] = 0
-df_t['velocity'][df_t['velocity'] < 0] = 0
+# This function takes grid folder, walks through all folders within the grid
+# and precomputes files raw_data_file (all raw) and frame within the grid folder
+def preprocess_grid(grid_folder):
+    
+    # create a list of folders within the grid
+    subfolders = [f.path for f in os.scandir(grid_folder) if f.is_dir()]
+    raw_track_data = pd.DataFrame()
+    list_ = []
+    flight_no = 0    
+    
+    for subfolder in subfolders: 
+        allFiles = glob.glob(subfolder + "\\" + "*.igc")
+        for single_file in allFiles:
+            flight_no += 1
+            try:
+                df = pd.read_csv(single_file, index_col = None, header=None, skiprows = 0, usecols=[0], encoding = "ISO-8859-1")
+                df.columns = ["record"]
+                df["date"] = df['record'][min(df[df["record"].str.startswith("HFDTE") == True].index.tolist())]
+                df["flight_no"] = flight_no
+                list_.append(df)
+            except:
+                pass
+    print(flight_no)
+    
+    raw_track_data = pd.concat(list_, sort = False)
+    # drop duplicates (files are extracted from different sites - there may
+    # still be duplicates)
+    raw_track_data = raw_track_data.drop_duplicates(subset=['record', 'date'], keep="first")
+    
+    # clean up after processing
+    del single_file, list_, df
+    
+    # save the raw track data file
+    raw_track_file = grid_folder + "raw_track_file.csv"
+    raw_track_data.to_csv(raw_track_file, sep = "\t")
+    
+    # extracts only flight records starting with a "B"
+    df = raw_track_data[raw_track_data["record"].str.startswith("B") == True]    
+    
+    # saves dataframe as Series
+    my_series = df["record"].T.squeeze()
+    # extract data from the series to represent the different data facts
+    df["flight_time"] = my_series.str.slice(1, 7, 1)
+    df["latitude"] = my_series.str.slice(7, 14, 1)
+    df["lat_orient"] = my_series.str.slice(14, 15, 1)
+    df["longitude"] = my_series.str.slice(15, 23, 1)
+    df["lon_orient"] = my_series.str.slice(23, 24, 1)
+    df["bar_alt"] = my_series.str.slice(25, 30, 1)
+    df["gps_alt"] = my_series.str.slice(31, 35, 1)
+    
+    del my_series
+    
+    # extract only numeric data from the data field (eliminate the "HFDTE" and the such)
+    # df column needs to be transposed into a series in order to perform this operation
+    df['date'] = df['date'].T.squeeze().str.extract('(\d\d\d\d\d\d)', expand = True)
+    # change format of the date field to yymmdd
+    df['date'] = df['date'].str.slice(4, 6, 1) + \
+                   df['date'].str.slice(2, 4, 1) + \
+                   df['date'].str.slice(0, 2, 1)
+                     
+    # delete rogue records after conversion of latitude and longitude
+    df['longitude'] = df['longitude'].str.replace('-','0')
+    df = df[pd.to_numeric(df['longitude'], errors='coerce').notnull()]
+    df = df[pd.to_numeric(df['latitude'], errors='coerce').notnull()]
 
-df_t = df_t.drop(['bar_alt_shifted'], axis = 1)
-df_t = df_t.drop(['gps_alt_shifted'], axis = 1)
+    # convert longitude and latitude to float and recalculate into decimal degrees
+    df['longitude'] = df['longitude'].astype(float)
+    df['longitude'] = df['longitude'] / 100000.0
+    # convert longitude to decimal degrees
+    df['longitude'] = np.modf(df['longitude'])[1] + np.modf(df['longitude'])[0] / 0.6
+    
+    df['latitude'] = df['latitude'].astype(float)
+    df['latitude'] = df['latitude'] / 100000.0
+    # convert latitude to decimal degrees
+    df['latitude'] = np.modf(df['latitude'])[1] + np.modf(df['latitude'])[0] / 0.6
+    
+    ###########################################################################
+    # Add a function that assigns NS_sm_grid and EW_sm_grid
+    # NS are rows in the numpy array, EW are columns
+    # This will be important for crating grids
+    df['NS_grid'] = (round(1000 * (df['latitude']), 0)).astype(int)
+    df['EW_grid'] = (round(1000 * (df['longitude']), 0)).astype(int)
 
-## run some basics statistics to check if everything worked out fine
-print("velocity", min(df_t['velocity']), max(df_t['velocity']))
-print("bearing", min(df_t['bearing']), max(df_t['bearing']))
-print("gps_alt_vel", min(df_t['gps_alt_vel']), max(df_t['gps_alt_vel']))
+    # time will depend on the time zone so needs to be addressed further
+    # clean up the time column - if time greater than 235959 drop the row
+    df = df[df['flight_time'] < "235959"]
+    df = df[df['flight_time'] > "000000"]
+    df['hour'] = df['flight_time'].str.slice(0, 2, 1)
+    df['minute'] = df['flight_time'].str.slice(2, 4, 1)
+    df['hour_minute'] = df['flight_time'].str.slice(0, 4, 1)
+    df['second'] = df['flight_time'].str.slice(4, 6, 1)
+    
+    # clean up the flight_time column
+    # if seconds == 60 delete the record
+    # if seconds > 60 delete the entire flight
+    df = df[df['second'] != '60']
+    corrupt_flights = df['flight_no'][df['second'] > '59'].to_frame()
+    df = df.loc[~df['flight_no'].isin(corrupt_flights['flight_no']), :]
+    
+    # prepare the time_diff column
+    df['flight_time_shifted'] = df['flight_time'].shift(1)
+    df['flight_time_shifted'][df['flight_time_shifted'].isnull()] = df['flight_time']
+        
+    df['time_diff'] = df['flight_time'].apply(lambda x: datetime.strptime(x, '%H%M%S')) - \
+                            df['flight_time_shifted'].apply(lambda x: datetime.strptime(x, '%H%M%S'))
+                            
+    df['time_diff'] = df['time_diff'].apply(lambda x: x.total_seconds())    
+    df['time_diff'][df['time_diff'] == 0] = 1.0
+    # drop the auxiliary flight_time_shifted column
+    df = df.drop(['flight_time_shifted'], axis = 1)
+    
+    # run calculation funtions
+    df['distance'] = calc_distance(df)
+    # clean up the calculcated distance
+    df['distance'][df['distance'] > 1] = 0
+    df['bearing'] = calc_bearing(df)
+    df['velocity'] = calc_velocity(df)
+    
+    df['bar_alt'] = df['bar_alt'].apply(lambda x: float(x) if x.isnumeric() else 0)
+    df['bar_alt_diff'] = calc_height_gain(df, "bar_alt")
+    
+    df['gps_alt'] = df['gps_alt'].apply(lambda x: float(x) if x.isnumeric() else 0)
+    df['gps_alt_diff'] = calc_height_gain(df, "gps_alt")
+    df['bar_alt_vel'] = inst_vel_m_per_s(df['bar_alt_diff'], df['time_diff'])
+    df['gps_alt_vel'] = inst_vel_m_per_s(df['gps_alt_diff'], df['time_diff'])
+    
+    ###############################################################################
+    
+    df = df.drop(['bar_alt_shifted'], axis = 1)
+    df = df.drop(['gps_alt_shifted'], axis = 1)
+    
+    # run some basics statistics to check if everything worked out fine
+    print("velocity", min(df['velocity']), max(df['velocity']))
+    print("bearing", min(df['bearing']), max(df['bearing']))
+    print("gps_alt_vel", min(df['gps_alt_vel']), max(df['gps_alt_vel']))
+    
+    # Save the data with different calculated columns to Archives
+    frame_file = grid_folder + "frame.csv"
+    df.to_csv(frame_file, sep = ",")
+    
+    # delete components that went into building the df test data frame
+    del allFiles, raw_track_file, raw_track_data, frame_file, df
 
-### print time spent crunching
-print(datetime.now() - start_time)
 
-### deduplicate the summary_df and extract numeric date
-summary_df = summary_df.drop_duplicates(subset=['date', 'start_record', 'finish_record'], keep="first")
-summary_df_date = summary_df['date'].T.squeeze()
-summary_df['date'] = summary_df_date.str.extract('(\d\d\d\d\d\d)', expand = True)
-summary_df['date'] = summary_df['date'].str.slice(4, 6, 1) + \
-                     summary_df['date'].str.slice(2, 4, 1) + \
-                     summary_df['date'].str.slice(0, 2, 1)
-del summary_df_date
+###############################################################################
+# Before processing files we need to extract old from the zip file to make
+# sure we don't create duplicates we can't handle
+def read_zip_igcs(folder_name):
+    archive = zipfile.ZipFile(path2data + folder_name + "\\zip_igcs.zip", "r")
+    archive.extractall(path2data + folder_name)
+    archive.close()
+    os.remove(path2data + folder_name + "\\zip_igcs.zip")
 
-days = pd.DataFrame()
-days['sum_distance'] = df_t['distance'].groupby(df_t["date"]).sum()
 
-### take the numeric summary of flights from summary_df
-num_flights = summary_df['date'].groupby(summary_df["date"]).count().to_frame()
-### merge the distance summary with numeric number of flights
-days = pd.merge(days, num_flights, left_index = True, right_index = True)
+###############################################################################
+# Zip the igc_files - saves a lot of space
+def save_zip_igcs(folder_name):
+    source_files = folder_name + "\\*.igc"
+    # if the zip file exists remove it
+    if os.path.exists(folder_name + "\\zip_igcs.zip"):
+        os.remove(folder_name + "\\zip_igcs.zip")
+    zip_file = zipfile.ZipFile(folder_name + "\\zip_igcs.zip", "x", zipfile.ZIP_DEFLATED)
+    filelist=glob.glob(source_files)
+    # move all igc files to a separate folder for zipping
+    for file in filelist:
+        # zip the files
+        zip_file.write(file, basename(file))
+        os.remove(file)
+    zip_file.close()
 
-### Create a grid of one 10000ths of a decimal degree as the playground to store
-### information about thermals
-start_time = datetime.now()
-grid = np.zeros(shape = (20000, 20000))
-longitude = df_t['longitude']
-latitude = df_t['latitude']
-gps_alt_diff = df_t['gps_alt_diff']
-###for i in range(1000):
-for i in range(len(longitude)):
-    column = 20000 - int(round(10000 * (77.0 - longitude.values[i]), 0))
-    row = 20000 - int(round(10000 * (5.4 - latitude.values[i]), 0))
-    if (0 <= column < 20000) and (0 <= row < 20000):
-        if gps_alt_diff.values[i] > 0:
-            for j in range(-3, 4):
-                for k in range(-3, 4):
-                    grid[row + j, column + k] = grid[row + j, column + k] + gps_alt_diff.values[i]
+###############################################################################
+###############################################################################
+# END OF THE PREPROCESSING FUNCTION
 
-### print time spent crunching
-print(datetime.now() - start_time)
+## Slovakia
+#grid_folders = [path2grid + "N047E017\\", path2grid + "N047E018\\", path2grid + "N047E019\\",
+#                path2grid + "N047E020\\", path2grid + "N047E021\\",
+#                path2grid + "N048E017\\", path2grid + "N048E018\\", path2grid + "N048E019\\",
+#                path2grid + "N048E020\\", path2grid + "N048E021\\", path2grid + "N048E022\\",
+#                path2grid + "N049E017\\", path2grid + "N049E018\\", path2grid + "N049E019\\",
+#                path2grid + "N049E020\\", path2grid + "N049E021\\", path2grid + "N049E022\\"]
 
-sum_grid_columns = np.sum(grid, axis = 0)
-sum_grid_rows = np.sum(grid, axis = 1)
-import matplotlib.pyplot as plt
-plt.plot(sum_grid_columns)
-plt.plot(sum_grid_rows)
-np.amax(grid)
+# Bassano    
+#grid_folders = [path2grid + "N045E011\\", path2grid + "N045E012\\", path2grid + "N045E013\\", path2grid + "N045E014\\",
+#                path2grid + "N046E011\\", path2grid + "N046E012\\", path2grid + "N046E013\\", path2grid + "N046E014\\"]
 
-small_grid = grid[0:3000, 0:3000]
-np.amax(small_grid)
-np.unravel_index(np.argmax(grid, axis=None), grid.shape)
+# Karkonosze
+grid_folders = [path2grid + "N049E014\\", path2grid + "N049E015\\", path2grid + "N049E016\\",
+                path2grid + "N049E017\\", path2grid + "N049E018\\",
+                path2grid + "N050E014\\", path2grid + "N050E015\\", path2grid + "N050E016\\",
+                path2grid + "N050E017\\", path2grid + "N050E018\\",
+                path2grid + "N051E014\\", path2grid + "N051E015\\", path2grid + "N051E016\\",
+                path2grid + "N051E017\\", path2grid + "N051E018\\"]
+                
+for grid_folder in grid_folders:
+    start_time = datetime.now()
+    print(grid_folder)
+    preprocess_grid(grid_folder)
+    # print time spent crunching
+    print(datetime.now() - start_time)

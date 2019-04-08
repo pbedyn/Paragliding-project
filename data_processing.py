@@ -28,7 +28,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-
+### Determine the leftmost bottom corner of the grid
 def min_grid(grid_folders):
     grid_NS = []
     grid_EW = []
@@ -58,8 +58,8 @@ def process_lift(df, grid_folder, min_NS, min_EW):
     for i in range(len(df)):
         ### 5000 ensures that vast majority of observations fit into the 10000 by 10000 grid
         ### this means precision of this grid is approx. 200 meters
-        column = NS_grid[i] - min_NS
-        row = EW_grid[i] - min_EW
+        row = NS_grid[i] - min_NS
+        column = EW_grid[i] - min_EW
         if (0 <= column < 9996) and (0 <= row < 9996):
             ### Whenever there is a thermal I'm adding some height also to the surrounding area
             ### The first grid gets highest increment, grids surrounding get 0.2 of the increment
@@ -339,32 +339,52 @@ def wind_to_grid(df):
             pass
     return df
 
-path2grids = "C:\\Users\\bedynskipa01\\Downloads\\Flights\\Grid\\"
-grid_folder = path2grids + "N045E011\\"
+###############################################################################
+### execution of the main part of the program #################################    
+if __name__ == "__main__":
 
-### we'll measure performance of this little beauty
-start_time = datetime.now()
-
-if len(glob.glob(grid_folder + "\\" + "*.csv")) > 0:
     ### setting up paths to various data files
-    frame_file = grid_folder + "\\frame.csv"    
-    ### read data from the data_frame saved in the folder
-    df = pd.read_csv(frame_file, sep = ",")
-    df = df.rename(columns = {'Unnamed: 0':'old_index'})
-    df = df.drop(['old_index'], axis = 1)
-    print(len(df['flight_no'].unique()))
+    path2grid = 'D:\\Flights\\Grid\\'
     
-    min_NS, min_EW = min_grid(grid_folders)
-    for grid_folder in grid_folders:
-        process_lift_hours(df, grid_folder, min_NS, min_EW)
-    ###process_sink_hours(df)
-    ###df = process_circles(df)
-    ###df = process_wind(df)
-    ### processed all except wind
-    ### df = wind_to_grid(df)
-    ###df = process_lift_minutes(df)
-    ### df.to_csv(frame_file, sep = ",")
-del df
-### print time spent crunching
-print(datetime.now() - start_time)
+#    # Slovakia
+#    grid_folders = [path2grid + "N047E017\\", path2grid + "N047E018\\", path2grid + "N047E019\\",
+#                    path2grid + "N047E020\\", path2grid + "N047E021\\",
+#                    path2grid + "N048E017\\", path2grid + "N048E018\\", path2grid + "N048E019\\",
+#                    path2grid + "N048E020\\", path2grid + "N048E021\\", path2grid + "N048E022\\",
+#                    path2grid + "N049E017\\", path2grid + "N049E018\\", path2grid + "N049E019\\",
+#                    path2grid + "N049E020\\", path2grid + "N049E021\\", path2grid + "N049E022\\"]
 
+#    # Bassano    
+#    grid_folders = [path2grid + "N045E011\\", path2grid + "N045E012\\", path2grid + "N045E013\\", path2grid + "N045E014\\",
+#                    path2grid + "N046E011\\", path2grid + "N046E012\\", path2grid + "N046E013\\", path2grid + "N046E014\\"]
+
+    # Karkonosze
+    grid_folders = [path2grid + "N049E014\\", path2grid + "N049E015\\", path2grid + "N049E016\\",
+                    path2grid + "N049E017\\", path2grid + "N049E018\\",
+                    path2grid + "N050E014\\", path2grid + "N050E015\\", path2grid + "N050E016\\",
+                    path2grid + "N050E017\\", path2grid + "N050E018\\",
+                    path2grid + "N051E014\\", path2grid + "N051E015\\", path2grid + "N051E016\\",
+                    path2grid + "N051E017\\", path2grid + "N051E018\\"]
+
+    ### calculate the minimum NS and EW to subtract to standardize the grid format
+    min_NS, min_EW = min_grid(grid_folders)   
+    for grid_folder in grid_folders:
+        ### Measure time spent crunching each folder
+        start_time = datetime.now()
+        frame_file = grid_folder + "\\frame.csv"    
+        ### read data from the data_frame saved in the folder
+        df = pd.read_csv(frame_file, sep = ",")
+        df = df.rename(columns = {'Unnamed: 0':'old_index'})
+        df = df.drop(['old_index'], axis = 1)
+        print(len(df['flight_no'].unique()))
+        process_lift(df, grid_folder, min_NS, min_EW)
+    
+        ### print time spent crunching
+        print(datetime.now() - start_time)
+        ###process_sink_hours(df)
+        ###df = process_circles(df)
+        ###df = process_wind(df)
+        ### processed all except wind
+        ### df = wind_to_grid(df)
+        ###df = process_lift_minutes(df)
+        ### df.to_csv(frame_file, sep = ",")
