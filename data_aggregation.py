@@ -52,8 +52,6 @@ def create_sum_grid_array(grid_folders):
     sum_grid_array = grid_array.sum(axis = 0)
     return sum_grid_array
 
-###############################################################################
-###############################################################################
 ###############################################################################        
 ### This function creates data_to_show.csv ready for visualizations
 hour_array = np.zeros((12, 10000, 10000))
