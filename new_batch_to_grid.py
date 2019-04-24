@@ -102,7 +102,10 @@ def check_track_exists(source_file, flight_repo):
         df.columns = ["record"]
         #######################################################################
         # Files are saved based on month and year extracted from the track
-        date_entry = df[df['record'].str.startswith("HFDTE") == True].iloc[0].item()
+        try:
+            date_entry = df[df['record'].str.startswith("HFDTE") == True].iloc[0].item()
+        except:
+            date_entry = df[df['record'].str.startswith("HPDTE") == True].iloc[0].item()
         # strip tab characters
         date_entry = date_entry.strip('\t')
         month = date_entry[len(date_entry) - 4:len(date_entry) - 2]
@@ -133,7 +136,9 @@ def check_track_exists(source_file, flight_repo):
         else:
             return False, grid_folder, month_folder, b_record_entry
     except:
-        print("Error occurred while manipulating the igc file", source_file)
+        print("Error occurred while manipulating the igc file, deleting:", source_file)
+        #os.remove(source_file)
+        #return True, None, None, None
 
 ###############################################################################
 # Function deletes non_ascii characters from the name of the file

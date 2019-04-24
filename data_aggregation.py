@@ -56,7 +56,7 @@ def create_sum_grid_array(grid_folders):
 ### This function creates data_to_show.csv ready for visualizations
 hour_array = np.zeros((12, 10000, 10000))
 def create_hour_array(folder_name):
-    source_files = path2data + folder_name + "\\*.npz"
+    source_files = path2grid + folder_name + "\\*.npz"
     filelist=glob.glob(source_files)
     ### 
     for file_ in filelist:
@@ -99,7 +99,7 @@ def grid_data_to_show(sum_grid_array, path2grid, location_file_name):
 def save_hour_array(folder_name, a_type):
     for i in range(12):
         array_name = "grid_" + a_type + "_" + str(i + 12)
-        np.save(path2data + folder_name + "\\" + array_name + ".npy", hour_array[i, :, :])
+        np.save(path2grid + folder_name + "\\" + array_name + ".npy", hour_array[i, :, :])
         
 def create_data_to_show(folder_name, a_type):    
     ### Read in all grids from the folder
@@ -107,7 +107,7 @@ def create_data_to_show(folder_name, a_type):
     if a_type == "sink" or a_type == "lift":
         for k in range(12):
             array_name = "grid_" + a_type + "_" + str(k + 12)
-            grid = np.load(path2data + folder_name + "\\" + array_name + ".npy")
+            grid = np.load(path2grid + folder_name + "\\" + array_name + ".npy")
             grid_sm = np.zeros((2000, 2000))
             lon = []
             lat = []
@@ -136,7 +136,7 @@ def create_data_to_show(folder_name, a_type):
             
     else:
         array_name = "grid_" + a_type
-        container = np.load(path2data + folder_name + "\\" + array_name + ".npz")
+        container = np.load(path2grid + folder_name + "\\" + array_name + ".npz")
         grid = container['name']
         grid_sm = np.zeros((2000, 2000))
         lon = []
@@ -166,17 +166,18 @@ def create_data_to_show(folder_name, a_type):
     
     ### save the data_to_show file
     if a_type == "sink":
-        data_to_show.to_csv(path2data + folder_name + "\\" + "sink_data_to_show.csv", sep = ",")
+        data_to_show.to_csv(path2grid + folder_name + "\\" + "sink_data_to_show.csv", sep = ",")
     elif a_type == "lift":
-        data_to_show.to_csv(path2data + folder_name + "\\" + "lift_data_to_show.csv", sep = ",")
+        data_to_show.to_csv(path2grid + folder_name + "\\" + "lift_data_to_show.csv", sep = ",")
     else:
-        data_to_show.to_csv(path2data + folder_name + "\\" + "wind_data_to_show.csv", sep = ",")
+        data_to_show.to_csv(path2grid + folder_name + "\\" + "wind_data_to_show.csv", sep = ",")
 
 
 def create_part_day_to_show(folder_name, a_type):    
     ### Read in all grids from the folder
     data_to_show = pd.DataFrame()
-    grid = a
+    array_name = "grid_" + a_type
+    grid = np.load(path2grid + folder_name + "\\" + array_name + ".npy")
     grid_sm = np.zeros((2000, 2000))
     lon = []
     lat = []
@@ -206,11 +207,11 @@ def create_part_day_to_show(folder_name, a_type):
     
     ### save the data_to_show file
     if a_type == "sink":
-        data_to_show.to_csv(path2data + folder_name + "\\" + "sink_data_to_show.csv", sep = ",")
+        data_to_show.to_csv(path2grid + folder_name + "\\" + "sink_data_to_show.csv", sep = ",")
     elif a_type == "lift":
-        data_to_show.to_csv(path2data + folder_name + "\\" + "lift_data_to_show.csv", sep = ",")
+        data_to_show.to_csv(path2grid + folder_name + "\\" + "lift_data_to_show.csv", sep = ",")
     else:
-        data_to_show.to_csv(path2data + folder_name + "\\" + "wind_data_to_show.csv", sep = ",")
+        data_to_show.to_csv(path2grid + folder_name + "\\" + "wind_data_to_show.csv", sep = ",")
 
 
 #### Create data for xgboost model
@@ -220,7 +221,7 @@ def create_data_for_model(folder_name, size, a_type):
     if a_type == "sink" or a_type == "lift":
         for k in range(12):
             array_name = "grid_" + a_type + "_" + str(k + 12)
-            grid = np.load(path2data + folder_name + "\\" + array_name + ".npy")
+            grid = np.load(path2grid + folder_name + "\\" + array_name + ".npy")
             grid_sm = np.zeros((size, size))
             lon = []
             lat = []
@@ -268,7 +269,7 @@ def create_data_for_model(folder_name, size, a_type):
             
     else:
         array_name = "grid_" + a_type
-        container = np.load(path2data + folder_name + "\\" + array_name + ".npz")
+        container = np.load(path2grid + folder_name + "\\" + array_name + ".npz")
         grid = container['name']
         grid_sm = np.zeros((size, size))
         lon = []
@@ -317,11 +318,11 @@ def create_data_for_model(folder_name, size, a_type):
     
     ### save the data_to_show file
     if a_type == "sink":
-        data_to_show.to_csv(path2data + folder_name + "\\" + "sink_data_to_model.csv", sep = ",")
+        data_to_show.to_csv(path2grid + folder_name + "\\" + "sink_data_to_model.csv", sep = ",")
     elif a_type == "lift":
-        data_to_show.to_csv(path2data + folder_name + "\\" + "lift_data_to_model.csv", sep = ",")
+        data_to_show.to_csv(path2grid + folder_name + "\\" + "lift_data_to_model.csv", sep = ",")
     else:
-        data_to_show.to_csv(path2data + folder_name + "\\" + "wind_data_to_model.csv", sep = ",")
+        data_to_show.to_csv(path2grid + folder_name + "\\" + "wind_data_to_model.csv", sep = ",")
 
 
 ###############################################################################
@@ -343,13 +344,23 @@ if __name__ == "__main__":
 #    grid_folders = [path2grid + "N045E011\\", path2grid + "N045E012\\", path2grid + "N045E013\\", path2grid + "N045E014\\",
 #                    path2grid + "N046E011\\", path2grid + "N046E012\\", path2grid + "N046E013\\", path2grid + "N046E014\\"]
 
-    # Karkonosze
-    grid_folders = [path2grid + "N049E014\\", path2grid + "N049E015\\", path2grid + "N049E016\\",
-                    path2grid + "N049E017\\", path2grid + "N049E018\\",
-                    path2grid + "N050E014\\", path2grid + "N050E015\\", path2grid + "N050E016\\",
-                    path2grid + "N050E017\\", path2grid + "N050E018\\",
-                    path2grid + "N051E014\\", path2grid + "N051E015\\", path2grid + "N051E016\\",
-                    path2grid + "N051E017\\", path2grid + "N051E018\\"]
+#    # Karkonosze
+#    grid_folders = [path2grid + "N049E014\\", path2grid + "N049E015\\", path2grid + "N049E016\\",
+#                    path2grid + "N049E017\\", path2grid + "N049E018\\",
+#                    path2grid + "N050E014\\", path2grid + "N050E015\\", path2grid + "N050E016\\",
+#                    path2grid + "N050E017\\", path2grid + "N050E018\\",
+#                    path2grid + "N051E014\\", path2grid + "N051E015\\", path2grid + "N051E016\\",
+#                    path2grid + "N051E017\\", path2grid + "N051E018\\"]
+    
+    # Perugia
+    grid_folders = [path2grid + "N040E013\\", path2grid + "N040E014\\", path2grid + "N040E015\\",
+                    path2grid + "N041E012\\", path2grid + "N041E013\\",
+                    path2grid + "N041E014\\", path2grid + "N041E015\\",
+                    path2grid + "N042E011\\", path2grid + "N042E012\\", path2grid + "N042E013\\",
+                    path2grid + "N042E014\\",
+                    path2grid + "N043E011\\", path2grid + "N043E012\\", path2grid + "N043E013\\",
+                    path2grid + "N044E011\\", path2grid + "N044E012\\",
+                    path2grid + "N044E014\\", path2grid + "N044E015\\"]
 
     
     start_time = datetime.now()

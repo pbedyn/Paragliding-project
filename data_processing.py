@@ -358,13 +358,23 @@ if __name__ == "__main__":
 #    grid_folders = [path2grid + "N045E011\\", path2grid + "N045E012\\", path2grid + "N045E013\\", path2grid + "N045E014\\",
 #                    path2grid + "N046E011\\", path2grid + "N046E012\\", path2grid + "N046E013\\", path2grid + "N046E014\\"]
 
-    # Karkonosze
-    grid_folders = [path2grid + "N049E014\\", path2grid + "N049E015\\", path2grid + "N049E016\\",
-                    path2grid + "N049E017\\", path2grid + "N049E018\\",
-                    path2grid + "N050E014\\", path2grid + "N050E015\\", path2grid + "N050E016\\",
-                    path2grid + "N050E017\\", path2grid + "N050E018\\",
-                    path2grid + "N051E014\\", path2grid + "N051E015\\", path2grid + "N051E016\\",
-                    path2grid + "N051E017\\", path2grid + "N051E018\\"]
+#    # Karkonosze
+#    grid_folders = [path2grid + "N049E014\\", path2grid + "N049E015\\", path2grid + "N049E016\\",
+#                    path2grid + "N049E017\\", path2grid + "N049E018\\",
+#                    path2grid + "N050E014\\", path2grid + "N050E015\\", path2grid + "N050E016\\",
+#                    path2grid + "N050E017\\", path2grid + "N050E018\\",
+#                    path2grid + "N051E014\\", path2grid + "N051E015\\", path2grid + "N051E016\\",
+#                    path2grid + "N051E017\\", path2grid + "N051E018\\"]
+    
+    # Perugia
+    grid_folders = [path2grid + "N040E013\\", path2grid + "N040E014\\", path2grid + "N040E015\\",
+                    path2grid + "N041E012\\", path2grid + "N041E013\\",
+                    path2grid + "N041E014\\", path2grid + "N041E015\\",
+                    path2grid + "N042E011\\", path2grid + "N042E012\\", path2grid + "N042E013\\",
+                    path2grid + "N042E014\\",
+                    path2grid + "N043E011\\", path2grid + "N043E012\\", path2grid + "N043E013\\",
+                    path2grid + "N044E011\\", path2grid + "N044E012\\",
+                    path2grid + "N044E014\\", path2grid + "N044E015\\"]
 
     ### calculate the minimum NS and EW to subtract to standardize the grid format
     min_NS, min_EW = min_grid(grid_folders)   

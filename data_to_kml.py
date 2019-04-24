@@ -5,6 +5,8 @@ Created on Sat Oct 20 09:23:06 2018
 """
 import pandas as pd
 import numpy as np
+import simplekml
+from simplekml import Kml
 ###############################################################################
 from datetime import datetime
 import multiprocessing
@@ -45,11 +47,11 @@ def prep_lift(num):
         x2 = data_to_show[lon_col][i + 1]
         y2 = data_to_show[lat_col][i + 1]
         z2 = data_to_show[data_col][i + 1] / divisor            
-        if z1 > 10 or z2 > 10:
+        if z1 > 3 or z2 > 3:
             width = 3
-            if z1 < 20 or z2 < 20:
+            if z1 < 5 or z2 < 5:
                 color = 'ff14f0ff'
-            elif z1 < 40 or z2 < 40:
+            elif z1 < 10 or z2 < 10:
                 width = 5
                 color = 'ff1478ff'
             else:
@@ -141,7 +143,7 @@ def new_prep_lift_kml_per_hour(hours, data_to_show):
                 lines.insert(len(lines) - 2, '            </LineString>\n')   
                 lines.insert(len(lines) - 2, '        </Placemark>\n')
             
-        f = open(path2data + "hours\\Roldanillo_" + str(hour) + "_thermals.kml", "w")
+        f = open(path2grid + "hours\\Roldanillo_" + str(hour) + "_thermals.kml", "w")
         for line in lines:
             f.write(line)
         f.close()
@@ -204,9 +206,9 @@ def prep_morning_lift(data_to_show, day_part, divisor):
             lines.insert(len(lines) - 2, '        </Placemark>\n')
         
     if day_part == "morning":
-        f = open(path2data + "hours\\Morn_therm.kml", "w")
+        f = open(path2grid + "hours\\Morn_therm.kml", "w")
     else:
-        f = open(path2data + "hours\\Aftn_therm.kml", "w")
+        f = open(path2grid + "hours\\Aftn_therm.kml", "w")
     for line in lines:
         f.write(line)
     f.close()
@@ -273,9 +275,9 @@ def prep_afternoon_lift(data_to_show, day_part, divisor):
             lines.insert(len(lines) - 2, '        </Placemark>\n')
         
     if day_part == "morning":
-        f = open(path2data + "hours\\Morn_therm.kml", "w")
+        f = open(path2grid + "hours\\Morn_therm.kml", "w")
     else:
-        f = open(path2data + "hours\\Aftn_therm.kml", "w")
+        f = open(path2grid + "hours\\Aftn_therm.kml", "w")
     for line in lines:
         f.write(line)
     f.close()
@@ -319,7 +321,7 @@ def prep_lift_kml_per_hour(hours, data_to_show):
                 ### linestring.extrude = 1
         
         kml_file_name = "Roldanillo_" + str(hour) + "_thermals.kml"
-        kml.save(path2data + "hours\\" + kml_file_name)
+        kml.save(path2grid + "hours\\" + kml_file_name)
 
 
 # this just computes the sink grid perhaps - need to figure out if I need it
@@ -356,7 +358,7 @@ def prep_sink_kml_per_hour(hours, data_to_show):
                 ### linestring.extrude = 1
         
         kml_file_name = "Roldanillo_" + str(hour) + "_sinks.kml"
-        kml.save(path2data + "hours\\" + kml_file_name)
+        kml.save(path2grid + "hours\\" + kml_file_name)
 
 # calculate wind grid
 def prep_wind_kml_per_hour(data_to_show):
@@ -389,14 +391,15 @@ def prep_wind_kml_per_hour(data_to_show):
             linestring.style.linestyle.color = '99ffac59'
     
     kml_file_name = "Roldanillo_wind.kml"
-    kml.save(path2data + "hours\\" + kml_file_name)
+    kml.save(path2grid + "hours\\" + kml_file_name)
     
 
 ### setting up paths to various data files
 start_time = datetime.now()
 path2grid = 'D:\\Flights\\Grid\\'
+path2grid = '/mnt/d/flights/grid/'
 # change location file name to run kmls for another location
-location_file_name = "Karkonosze"
+location_file_name = "Perugia"
 data_to_show_file = path2grid + location_file_name + ".csv"
 
 data_to_show_large = pd.read_csv(data_to_show_file, sep = ",")

@@ -28,8 +28,6 @@ summary_file = "Roldanillo.txt"
 summary_file_path = path2data + summary_file
 
 ###############################################################################
-###############################################################################
-###############################################################################
 def haversine(lon1, lat1, lon2, lat2):
     """
     Vectorized version of distance calculation based on the haversine formula
@@ -47,8 +45,6 @@ def haversine(lon1, lat1, lon2, lat2):
     r = 6371.0 # Radius of earth in miles. Use 3956 for miles
     return c * r
 
-###############################################################################
-###############################################################################
 ###############################################################################
 def bearing(lon1, lat1, lon2, lat2):
     """
@@ -68,8 +64,6 @@ def bearing(lon1, lat1, lon2, lat2):
     return np.mod(brng + 360.0, 360.0) ## convert the outcome to degrees
 
 ###############################################################################
-###############################################################################
-###############################################################################
 def inst_vel_km_per_h(distance, time):
     """
     Vectorized version of instanteneous velocity calculation
@@ -79,8 +73,6 @@ def inst_vel_km_per_h(distance, time):
     return distance / time_hours
 
 ###############################################################################
-###############################################################################
-###############################################################################
 def inst_vel_m_per_s(distance, time):
     """
     Vectorized version of instanteneous velocity calculation
@@ -88,8 +80,6 @@ def inst_vel_m_per_s(distance, time):
     """
     return distance / time
 
-###############################################################################
-###############################################################################
 ###############################################################################
 def calc_distance(df):
     ''' Function takes a data frame containing latitude and longitude
@@ -105,9 +95,7 @@ def calc_distance(df):
     df['lon_shifted'][df['lon_shifted'].isnull()] = df['longitude']
     ## use the vectorized haversine function
     return haversine(df['longitude'], df['latitude'], df['lon_shifted'], df['lat_shifted'])
-    
-###############################################################################
-###############################################################################
+
 ###############################################################################
 def calc_bearing(df):
     ''' Function takes a data frame containing latitude and longitude
@@ -124,9 +112,7 @@ def calc_bearing(df):
     df['lon_shifted'][df['lon_shifted'].isnull()] = df['longitude']
     ## use the vectorized forward azimuth function
     return bearing(df['longitude'], df['latitude'], df['lon_shifted'], df['lat_shifted'])
-    
-###############################################################################
-###############################################################################
+
 ###############################################################################
 def calc_velocity(df):
     ''' Function takes a distance and time and calculates velocity
@@ -134,8 +120,6 @@ def calc_velocity(df):
     ## data preparation (create new columns, shift time, take care of nans)
     return inst_vel_km_per_h(df['distance'], df['time_diff'])
 
-###############################################################################
-###############################################################################
 ###############################################################################
 def calc_height_gain(df, height_type):
     ''' Function calculates height type for barographic (bar_alt) or 
