@@ -215,12 +215,12 @@ def save_zip_igcs(folder_name):
 #                path2grid + "N046E011\\", path2grid + "N046E012\\", path2grid + "N046E013\\", path2grid + "N046E014\\"]
 
 # Karkonosze
-#grid_folders = [path2grid + "N049E014\\", path2grid + "N049E015\\", path2grid + "N049E016\\",
-#                path2grid + "N049E017\\", path2grid + "N049E018\\",
-#                path2grid + "N050E014\\", path2grid + "N050E015\\", path2grid + "N050E016\\",
-#                path2grid + "N050E017\\", path2grid + "N050E018\\",
-#                path2grid + "N051E014\\", path2grid + "N051E015\\", path2grid + "N051E016\\",
-#                path2grid + "N051E017\\", path2grid + "N051E018\\"]
+grid_folders = [path2grid + "N049E014\\", path2grid + "N049E015\\", path2grid + "N049E016\\",
+                path2grid + "N049E017\\", path2grid + "N049E018\\",
+                path2grid + "N050E014\\", path2grid + "N050E015\\", path2grid + "N050E016\\",
+                path2grid + "N050E017\\", path2grid + "N050E018\\",
+                path2grid + "N051E014\\", path2grid + "N051E015\\", path2grid + "N051E016\\",
+                path2grid + "N051E017\\", path2grid + "N051E018\\"]
 
 ## Perugia
 #grid_folders = [path2grid + "N040E013\\", path2grid + "N040E014\\", path2grid + "N040E015\\",
@@ -233,9 +233,10 @@ def save_zip_igcs(folder_name):
 #                path2grid + "N044E014\\", path2grid + "N044E015\\"]
 
 # St_Andres
-grid_folders = [path2grid + "N043E005\\", path2grid + "N043E006\\", path2grid + "N043E007\\",
-                path2grid + "N044E005\\", path2grid + "N044E006\\",
-                path2grid + "N045E005\\", path2grid + "N045E006\\", path2grid + "N045E007\\"]
+#grid_folders = [path2grid + "N043E005\\", path2grid + "N043E006\\", path2grid + "N043E007\\",
+#                path2grid + "N044E005\\", path2grid + "N044E006\\",
+#                path2grid + "N045E005\\", path2grid + "N045E006\\", path2grid + "N045E007\\",
+#                path2grid + "N045E008\\"]
                 
 for grid_folder in grid_folders:
     start_time = datetime.now()
