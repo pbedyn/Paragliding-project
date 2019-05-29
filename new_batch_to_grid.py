@@ -42,7 +42,7 @@ class IgcFile():
             else:
                 return False
         except OSError:
-            print("Error verifying file existence " + self.path2file)
+            return False
     
     ###############################################################################
     # Function moves a file to a specified folder
